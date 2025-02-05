@@ -1,24 +1,40 @@
 import streamlit as st
 import os
-from process_image import process_image, get_downloads_folder
+from process_image import process_image
 
-st.set_page_config(page_title="🔵 Vectorizer Tool", layout="centered")
+st.set_page_config(page_title="🔵 Vectorizer", layout="centered")
 
-st.title("🔵 Vectorizer Branding Tool")
+st.title("🔵 Vectorizer")
 st.write("Upload an image to apply the blue branding process.")
 
-uploaded_file = st.file_uploader("Choose an image...", type=["png", "jpg", "jpeg"])
+uploaded_file = st.file_uploader("CHOOSE A MEME MFER...", type=["png", "jpg", "jpeg"])
 
 if uploaded_file is not None:
     # Save uploaded image temporarily
-    file_path = os.path.join(get_downloads_folder(), uploaded_file.name)
+    file_path = os.path.join("temp", uploaded_file.name)
+    os.makedirs("temp", exist_ok=True)
     with open(file_path, "wb") as f:
         f.write(uploaded_file.getbuffer())
 
     # Process Image
-    output_path = process_image(file_path, output_name=f"vectorized_{uploaded_file.name}")
+    processed_image = process_image(file_path)
 
-    # Show Results
-    st.image(output_path, caption="Processed Image", use_column_width=True)
+    # Convert to Bytes for Download
+    from io import BytesIO
+    img_bytes = BytesIO()
+    processed_image.save(img_bytes, format="PNG")
+    img_bytes.seek(0)
 
-    st.success(f"✅ Image saved to Downloads: {output_path}")
+    # Display Processed Image
+    st.image(processed_image, caption="Processed Image", use_column_width=True)
+
+    # Provide Browser Download
+    st.download_button(
+        label="⬇ DOWNLOAD THE VECTORIZEDMEME MFER",
+        data=img_bytes,
+        file_name=f"vectorized_{uploaded_file.name}",
+        mime="image/png"
+    )
+
+    # Cleanup temp file
+    os.remove(file_path)
