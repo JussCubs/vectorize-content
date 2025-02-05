@@ -16,7 +16,7 @@ def hex_to_rgb(hex_color):
 
 def apply_luminosity_blend(base_img, overlay_img):
     """
-    Corrected W3C 'Luminosity' blending:
+    Correct W3C 'Luminosity' blending:
     - Uses 0% saturation grayscale as the luminance source
     - Keeps the hue/saturation from the blue background
     - Ensures 100% opacity
@@ -28,9 +28,8 @@ def apply_luminosity_blend(base_img, overlay_img):
     # Ensure grayscale matches RGB shape
     luminance = np.stack([overlay_np] * 3, axis=-1)  # Expand dims to (H, W, 3)
 
-    # Correct blend: Replace luminance but keep blue hue/saturation
-    blended_np = base_np.copy()
-    blended_np = base_np * (luminance / np.mean(base_np, axis=2, keepdims=True))
+    # Blend: Replace luminance but keep blue hue/saturation
+    blended_np = base_np * (luminance / np.maximum(np.mean(base_np, axis=2, keepdims=True), 1e-6))
 
     # Clip values to ensure valid pixel range
     blended_np = np.clip(blended_np * 255, 0, 255).astype(np.uint8)
@@ -48,7 +47,7 @@ def process_image(image_path, output_name="processed_image.png"):
     # STEP 1: Convert image to grayscale (100% desaturation)
     grayscale_img = ImageOps.grayscale(img).convert("RGB")  # Ensures 0% saturation
 
-    # STEP 2: Create a solid blue background
+    # STEP 2: Create a solid blue background with NO corner radius
     blue_rgb = hex_to_rgb(BLUE_HEX)
     blue_bg = Image.new("RGB", (width, height), blue_rgb)
 
@@ -56,7 +55,7 @@ def process_image(image_path, output_name="processed_image.png"):
     blended = apply_luminosity_blend(blue_bg, grayscale_img)
 
     # STEP 4: Ensure 100% opacity by merging again
-    final_img = Image.blend(blue_bg, blended, alpha=1.0)  # 100% opacity
+    final_img = Image.blend(blue_bg, blended, alpha=1.0)  # Full Opacity
 
     # STEP 5: Save processed image
     output_path = os.path.join(OUTPUT_FOLDER, output_name)
