@@ -14,22 +14,26 @@ def hex_to_rgb(hex_color):
     return tuple(int(hex_color[i:i+2], 16) for i in (1, 3, 5))
 
 def process_image(image_path, output_name="processed_image.png"):
-    """Applies the Figma-style blue branding process correctly."""
+    """Applies the correct Figma-style blue branding process."""
     ensure_output_folder()
     
     # Open image
     img = Image.open(image_path).convert("RGB")
     width, height = img.size
 
-    # Convert image to grayscale (Desaturation)
+    # Convert to grayscale (Desaturation)
     img_gray = img.convert("L").convert("RGB")
+
+    # Adjust brightness and contrast to match Figma
+    enhancer = ImageEnhance.Contrast(img_gray)
+    img_gray = enhancer.enhance(2.0)  # Higher contrast for a more Figma-like effect
 
     # Create solid blue background
     blue_rgb = hex_to_rgb(BLUE_HEX)
     blue_bg = Image.new("RGB", (width, height), blue_rgb)
 
-    # Blend images using proper opacity (Figma-like Luminosity effect)
-    blended = Image.blend(blue_bg, img_gray, alpha=0.65)  # Adjusted for best visibility
+    # Blend using multiply mode to preserve highlights
+    blended = Image.blend(blue_bg, img_gray, alpha=0.55)  # Adjusted to match Figma look
 
     # Save the processed image
     output_path = os.path.join(OUTPUT_FOLDER, output_name)
