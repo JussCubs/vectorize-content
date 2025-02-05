@@ -1,4 +1,5 @@
 from PIL import Image, ImageEnhance
+import numpy as np
 import os
 
 OUTPUT_FOLDER = "output"
@@ -21,19 +22,36 @@ def process_image(image_path, output_name="processed_image.png"):
     img = Image.open(image_path).convert("RGB")
     width, height = img.size
 
-    # Convert to grayscale (Desaturation)
+    # Convert image to grayscale (Desaturation)
     img_gray = img.convert("L").convert("RGB")
 
-    # Adjust brightness and contrast to match Figma
+    # Adjust brightness & contrast dynamically based on deltas
+    enhancer = ImageEnhance.Brightness(img_gray)
+    img_gray = enhancer.enhance(1.2)  # General brightness boost
+
     enhancer = ImageEnhance.Contrast(img_gray)
-    img_gray = enhancer.enhance(2.0)  # Higher contrast for a more Figma-like effect
+    img_gray = enhancer.enhance(1.5)  # Higher contrast for a sharper effect
+
+    # Convert to NumPy for per-channel adjustments
+    img_np = np.array(img_gray, dtype=np.float32)
+
+    # Apply per-channel scaling factors
+    img_np[..., 0] *= 1.2  # Red
+    img_np[..., 1] *= 1.2  # Green
+    img_np[..., 2] *= 2.5  # Blue (strongest boost)
+
+    # Clip values to 255 (valid image range)
+    img_np = np.clip(img_np, 0, 255).astype(np.uint8)
+
+    # Convert back to PIL image
+    img_gray_adjusted = Image.fromarray(img_np)
 
     # Create solid blue background
     blue_rgb = hex_to_rgb(BLUE_HEX)
     blue_bg = Image.new("RGB", (width, height), blue_rgb)
 
-    # Blend using multiply mode to preserve highlights
-    blended = Image.blend(blue_bg, img_gray, alpha=0.55)  # Adjusted to match Figma look
+    # Use "Screen" blending mode for brighter highlights
+    blended = Image.blend(blue_bg, img_gray_adjusted, alpha=0.6)
 
     # Save the processed image
     output_path = os.path.join(OUTPUT_FOLDER, output_name)
