@@ -19,13 +19,17 @@ def apply_luminosity_blend(base_img, overlay_img):
     Corrected W3C 'Luminosity' blending:
     - Uses 0% saturation grayscale as the luminance source
     - Keeps the hue/saturation from the blue background
+    - Ensures 100% opacity
     """
 
     base_np = np.array(base_img, dtype=np.float32) / 255.0  # Normalize 0-1
-    overlay_np = np.array(overlay_img.convert("L"), dtype=np.float32) / 255.0  # Convert grayscale
-    luminance = np.expand_dims(overlay_np, axis=-1)  # Expand dims to match (H, W, 1)
+    overlay_np = np.array(overlay_img.convert("L"), dtype=np.float32) / 255.0  # Convert to grayscale
 
-    # Ensure correct broadcasting shape
+    # Ensure grayscale matches RGB shape
+    luminance = np.stack([overlay_np] * 3, axis=-1)  # Expand dims to (H, W, 3)
+
+    # Correct blend: Replace luminance but keep blue hue/saturation
+    blended_np = base_np.copy()
     blended_np = base_np * (luminance / np.mean(base_np, axis=2, keepdims=True))
 
     # Clip values to ensure valid pixel range
@@ -34,7 +38,7 @@ def apply_luminosity_blend(base_img, overlay_img):
     return Image.fromarray(blended_np)
 
 def process_image(image_path, output_name="processed_image.png"):
-    """Processes the image exactly like Figma, ensuring zero saturation."""
+    """Processes the image exactly like Figma, ensuring zero saturation and full opacity."""
     ensure_output_folder()
 
     # Open image
@@ -42,7 +46,7 @@ def process_image(image_path, output_name="processed_image.png"):
     width, height = img.size
 
     # STEP 1: Convert image to grayscale (100% desaturation)
-    grayscale_img = ImageOps.grayscale(img).convert("RGB")  # 0% Saturation, back to RGB
+    grayscale_img = ImageOps.grayscale(img).convert("RGB")  # Ensures 0% saturation
 
     # STEP 2: Create a solid blue background
     blue_rgb = hex_to_rgb(BLUE_HEX)
@@ -51,8 +55,11 @@ def process_image(image_path, output_name="processed_image.png"):
     # STEP 3: Apply W3C Luminosity Blend Mode
     blended = apply_luminosity_blend(blue_bg, grayscale_img)
 
-    # STEP 4: Save processed image
+    # STEP 4: Ensure 100% opacity by merging again
+    final_img = Image.blend(blue_bg, blended, alpha=1.0)  # 100% opacity
+
+    # STEP 5: Save processed image
     output_path = os.path.join(OUTPUT_FOLDER, output_name)
-    blended.save(output_path)
+    final_img.save(output_path)
 
     return output_path
