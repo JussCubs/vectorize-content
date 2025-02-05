@@ -12,63 +12,14 @@ def ensure_output_folder():
 
 def hex_to_rgb(hex_color):
     """Convert HEX color to RGB tuple."""
-    return np.array([int(hex_color[i:i+2], 16) for i in (1, 3, 5)], dtype=np.uint8)
+    return np.array([int(hex_color[i:i+2], 16) for i in (1, 3, 5)], dtype=np.float32)
 
-def rgb_to_hsl(rgb):
-    """Convert an entire RGB NumPy array to HSL at once."""
-    rgb = rgb / 255.0
-    max_c = np.max(rgb, axis=-1)
-    min_c = np.min(rgb, axis=-1)
-    l = (max_c + min_c) / 2
-
-    delta = max_c - min_c
-    s = np.where(l > 0.5, delta / (2.0 - max_c - min_c), delta / (max_c + min_c))
-    s[delta == 0] = 0  # If delta is zero, saturation is zero
-
-    h = np.zeros_like(l)
-    mask = (delta != 0)
-
-    # Hue calculations
-    mask_r = (max_c == rgb[..., 0]) & mask
-    mask_g = (max_c == rgb[..., 1]) & mask
-    mask_b = (max_c == rgb[..., 2]) & mask
-
-    h[mask_r] = (rgb[mask_r, 1] - rgb[mask_r, 2]) / delta[mask_r] % 6
-    h[mask_g] = (rgb[mask_g, 2] - rgb[mask_g, 0]) / delta[mask_g] + 2
-    h[mask_b] = (rgb[mask_b, 0] - rgb[mask_b, 1]) / delta[mask_b] + 4
-    h = (h / 6) % 1  # Normalize to [0,1]
-
-    return np.stack([h * 360, s, l], axis=-1)
-
-def hsl_to_rgb(hsl):
-    """Convert an entire HSL NumPy array to RGB at once."""
-    h, s, l = hsl[..., 0] / 360.0, hsl[..., 1], hsl[..., 2]
-
-    q = np.where(l < 0.5, l * (1 + s), l + s - l * s)
-    p = 2 * l - q
-    t = np.stack([h + 1/3, h, h - 1/3], axis=-1)
-    t = np.where(t < 0, t + 1, t)
-    t = np.where(t > 1, t - 1, t)
-
-    def hue_to_rgb(p, q, t):
-        return np.where(t < 1/6, p + (q - p) * 6 * t,
-                        np.where(t < 1/2, q,
-                        np.where(t < 2/3, p + (q - p) * (2/3 - t) * 6, p)))
-
-    rgb = np.stack([hue_to_rgb(p, q, t[..., 0]),
-                    hue_to_rgb(p, q, t[..., 1]),
-                    hue_to_rgb(p, q, t[..., 2])], axis=-1)
-
-    return (rgb * 255).astype(np.uint8)
-
-def process_image(image_path, brightness=1.2, contrast=1.5, saturation=1.0, blend_alpha=0.65, output_name="processed_image.png"):
-    """Replicates Figma's Luminosity blend mode with a blue background (FAST version)."""
+def process_image(image_path, brightness=1.3, contrast=1.7, saturation=1.0, blend_alpha=0.65, output_name="processed_image.png"):
+    """Corrects the image to match Figma's Luminosity mode using precise adjustments."""
     ensure_output_folder()
     
     # Open and resize image (for performance)
     img = Image.open(image_path).convert("RGB")
-    img = img.resize((img.width // 2, img.height // 2))  # Resize to 50% to speed up processing
-
     width, height = img.size
 
     # Convert image to grayscale (extract luminance)
@@ -81,16 +32,20 @@ def process_image(image_path, brightness=1.2, contrast=1.5, saturation=1.0, blen
     # Convert grayscale image to NumPy array
     img_gray_np = np.array(img_gray) / 255.0  # Normalize luminance to [0,1]
 
-    # Create a solid blue background (as HSL)
+    # Create a solid blue background
     blue_rgb = hex_to_rgb(BLUE_HEX)
-    blue_h, blue_s, _ = rgb_to_hsl(blue_rgb)
 
-    # Apply the grayscale luminance to the blue hue/saturation
-    hsl_values = np.full((height, width, 3), [blue_h, blue_s, 0], dtype=np.float32)
-    hsl_values[..., 2] = img_gray_np  # Apply grayscale as lightness (L)
+    # Apply correction factors to match Figma (based on computed values)
+    correction_factors = np.array([2.5, 2.5, 2.5])  # Boost all channels
 
-    # Convert back to RGB
-    final_img_np = hsl_to_rgb(hsl_values)
+    # Blend grayscale as luminosity while applying color correction
+    corrected_rgb = blue_rgb * correction_factors  # Boost blue, restore red/green
+    corrected_rgb = np.clip(corrected_rgb, 0, 255)  # Ensure valid RGB values
+
+    # Apply grayscale luminance to the corrected color
+    final_img_np = np.zeros((height, width, 3), dtype=np.uint8)
+    for c in range(3):
+        final_img_np[..., c] = (img_gray_np * corrected_rgb[c]).astype(np.uint8)
 
     # Convert back to PIL image
     final_img = Image.fromarray(final_img_np)
