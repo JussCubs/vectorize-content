@@ -14,8 +14,8 @@ def hex_to_rgb(hex_color):
     """Convert HEX color to RGB tuple."""
     return tuple(int(hex_color[i:i+2], 16) for i in (1, 3, 5))
 
-def process_image(image_path, output_name="processed_image.png"):
-    """Replicates Figma's Luminosity blend mode with #0100FF background."""
+def process_image(image_path, brightness_factor=1.0, contrast_factor=1.0, blend_alpha=0.5, output_name="processed_image.png"):
+    """Replicates Figma's Luminosity blend mode with adjustable parameters."""
     ensure_output_folder()
     
     # Open image
@@ -25,9 +25,9 @@ def process_image(image_path, output_name="processed_image.png"):
     # Convert image to grayscale (FULL desaturation)
     img_gray = img.convert("L")  
 
-    # Adjust contrast to match Figma’s handling of luminosity
-    enhancer = ImageEnhance.Contrast(img_gray)
-    img_gray = enhancer.enhance(2.0)  # Stronger contrast boost for highlights
+    # Adjust brightness & contrast dynamically
+    img_gray = ImageEnhance.Brightness(img_gray).enhance(brightness_factor)
+    img_gray = ImageEnhance.Contrast(img_gray).enhance(contrast_factor)
 
     # Convert back to RGB (needed for blending)
     img_gray = img_gray.convert("RGB")
@@ -36,8 +36,8 @@ def process_image(image_path, output_name="processed_image.png"):
     blue_rgb = hex_to_rgb(BLUE_HEX)
     blue_bg = Image.new("RGB", (width, height), blue_rgb)
 
-    # Blend the grayscale image with the blue background (Luminosity Mode Approximation)
-    blended = ImageChops.multiply(blue_bg, img_gray)  
+    # Blend the grayscale image with the blue background (Figma Luminosity Effect)
+    blended = Image.blend(blue_bg, img_gray, alpha=blend_alpha)
 
     # Save the processed image
     output_path = os.path.join(OUTPUT_FOLDER, output_name)
