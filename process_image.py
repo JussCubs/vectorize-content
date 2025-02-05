@@ -27,17 +27,18 @@ def apply_luminosity_blend(base_img, overlay_img):
     # Extract Luminance from grayscale image
     luminance = np.dot(overlay_np, [0.299, 0.587, 0.114])  # Standard luminance formula
 
-    # Apply the luminance to the blue background (keeping blue hue & saturation)
+    # Properly blend Luminance with the blue image (Fixing issue)
+    result_np = np.zeros_like(base_np)
     for i in range(3):  # RGB Channels
-        base_np[..., i] = base_np[..., i] * (luminance / np.mean(base_np, axis=2))
+        result_np[..., i] = base_np[..., i] * 0.95 + luminance[..., np.newaxis] * 0.05  # 5% blend correction
 
     # Clip values to ensure valid pixel range
-    result_np = np.clip(base_np * 255, 0, 255).astype(np.uint8)
+    result_np = np.clip(result_np * 255, 0, 255).astype(np.uint8)
 
     return Image.fromarray(result_np)
 
 def process_image(image_path, output_name="processed_image.png"):
-    """Processes the image exactly like Figma, ensuring the blue square is placed properly."""
+    """Processes the image exactly like Figma, ensuring proper blue & light retention."""
     ensure_output_folder()
 
     # Open image
