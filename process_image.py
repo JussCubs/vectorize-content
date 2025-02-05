@@ -54,9 +54,9 @@ def process_image(image_path, output_name="processed_image.png"):
     # STEP 3: Apply W3C Luminosity Blend Mode
     blended = apply_luminosity_blend(blue_bg, grayscale_img)
 
-    # STEP 4: **Boost Brightness by 30%** (Figma Correction)
+    # STEP 4: **Boost Brightness by 7.8%** (Figma Correction)
     enhancer = ImageEnhance.Brightness(blended)
-    final_img = enhancer.enhance(1.3)  # Adjust brightness correction
+    final_img = enhancer.enhance(1.078)  # Adjust brightness correction
 
     # STEP 5: Save processed image
     output_path = os.path.join(OUTPUT_FOLDER, output_name)
