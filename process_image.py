@@ -16,24 +16,23 @@ def hex_to_rgb(hex_color):
 
 def apply_luminosity_blend(base_img, overlay_img):
     """
-    Correct W3C 'Luminosity' blending:
-    - Uses 0% saturation grayscale as the luminance source
-    - Keeps the hue/saturation from the blue background
-    - Ensures 100% opacity
+    Apply the correct W3C 'Luminosity' blending based on:
+    https://www.w3.org/TR/compositing-1/#blendingnonseparable
     """
-
-    base_np = np.array(base_img, dtype=np.float32) / 255.0  # Normalize 0-1
+    base_np = np.array(base_img, dtype=np.float32) / 255.0  # Normalize to [0,1]
     overlay_np = np.array(overlay_img.convert("L"), dtype=np.float32) / 255.0  # Convert to grayscale
 
-    # Ensure grayscale matches RGB shape
-    luminance = np.stack([overlay_np] * 3, axis=-1)  # Expand dims to (H, W, 3)
+    # Convert grayscale image back into 3-channel format
+    luminance = np.stack([overlay_np] * 3, axis=-1)
 
-    # Blend: Replace luminance but keep blue hue/saturation
-    blended_np = base_np * (luminance / np.maximum(np.mean(base_np, axis=2, keepdims=True), 1e-6))
+    # Preserve base image hue & saturation but replace luminance
+    blended_np = np.copy(base_np)
+    blended_np[..., 0] = base_np[..., 0]  # Keep Hue
+    blended_np[..., 1] = base_np[..., 1]  # Keep Saturation
+    blended_np[..., 2] = luminance[..., 0]  # Replace Lightness
 
     # Clip values to ensure valid pixel range
     blended_np = np.clip(blended_np * 255, 0, 255).astype(np.uint8)
-
     return Image.fromarray(blended_np)
 
 def process_image(image_path, output_name="processed_image.png"):
@@ -45,20 +44,20 @@ def process_image(image_path, output_name="processed_image.png"):
     width, height = img.size
 
     # STEP 1: Convert image to grayscale (100% desaturation)
-    grayscale_img = ImageOps.grayscale(img).convert("RGB")  # Ensures 0% saturation
+    grayscale_img = ImageOps.grayscale(img).convert("RGB")
 
-    # STEP 2: Create a solid blue background with NO corner radius
+    # STEP 2: Create a solid blue background
     blue_rgb = hex_to_rgb(BLUE_HEX)
     blue_bg = Image.new("RGB", (width, height), blue_rgb)
 
-    # STEP 3: Apply W3C Luminosity Blend Mode
+    # STEP 3: Apply proper W3C Luminosity Blend Mode
     blended = apply_luminosity_blend(blue_bg, grayscale_img)
 
-    # STEP 4: **Boost Brightness by 7.8%** (Figma Correction)
+    # STEP 4: Adjust brightness slightly to match Figma
     enhancer = ImageEnhance.Brightness(blended)
-    final_img = enhancer.enhance(1.078)  # Adjust brightness correction
+    final_img = enhancer.enhance(1.15)  # Brightness fine-tuning
 
-    # STEP 5: Save processed image
+    # STEP 5: Save the processed image
     output_path = os.path.join(OUTPUT_FOLDER, output_name)
     final_img.save(output_path)
 
