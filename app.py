@@ -5,7 +5,7 @@ from process_image import process_image
 st.set_page_config(page_title="🔵 Vectorizer", layout="centered")
 
 st.title("🔵 Vectorizer")
-st.write("Drop a meme and let the **blue magic** happen.")
+st.write("DROP MEME FOR **BLUE MAGIC**.")
 
 uploaded_file = st.file_uploader("PICK A MEME, MFER... ", type=["png", "jpg", "jpeg"])
 
@@ -16,14 +16,8 @@ if uploaded_file is not None:
     with open(file_path, "wb") as f:
         f.write(uploaded_file.getbuffer())
 
-    # Process Image
-    processed_image = process_image(file_path)
-
-    # Convert to Bytes for Download
-    from io import BytesIO
-    img_bytes = BytesIO()
-    processed_image.save(img_bytes, format="PNG")
-    img_bytes.seek(0)
+    # Process Image (Fix: Unpack tuple)
+    img_bytes, processed_image = process_image(file_path)
 
     # Display Processed Image
     st.image(processed_image, caption="🔵 Your Meme, but BLUE 🔵", use_column_width=True)
