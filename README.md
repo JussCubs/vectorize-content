@@ -10,7 +10,6 @@ vectorizer_tool/
 │── app.py             # Streamlit UI
 │── process_image.py   # Image processing logic
 │── requirements.txt   # Dependencies
-│── output/            # Folder to store processed images
 ```
 
 ---
