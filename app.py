@@ -5,9 +5,9 @@ from process_image import process_image
 st.set_page_config(page_title="🔵 Vectorizer", layout="centered")
 
 st.title("🔵 Vectorizer")
-st.write("UPLOAD AN IMAGE TO VECTORIZE IT BLUE")
+st.write("Drop a meme and let the **blue magic** happen.")
 
-uploaded_file = st.file_uploader("CHOOSE A MEME MFER...", type=["png", "jpg", "jpeg"])
+uploaded_file = st.file_uploader("PICK A MEME, MFER... ", type=["png", "jpg", "jpeg"])
 
 if uploaded_file is not None:
     # Save uploaded image temporarily
@@ -26,11 +26,11 @@ if uploaded_file is not None:
     img_bytes.seek(0)
 
     # Display Processed Image
-    st.image(processed_image, caption="Processed Image", use_column_width=True)
+    st.image(processed_image, caption="🔵 Your Meme, but BLUE 🔵", use_column_width=True)
 
     # Provide Browser Download
     st.download_button(
-        label="⬇ DOWNLOAD THE VECTORIZEDMEME MFER",
+        label="DOWNLOAD YOUR VECTORIZED MEME 🚀",
         data=img_bytes,
         file_name=f"vectorized_{uploaded_file.name}",
         mime="image/png"
