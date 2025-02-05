@@ -1,4 +1,4 @@
-from PIL import Image, ImageEnhance
+from PIL import Image, ImageEnhance, ImageChops
 import numpy as np
 import os
 
@@ -15,43 +15,29 @@ def hex_to_rgb(hex_color):
     return tuple(int(hex_color[i:i+2], 16) for i in (1, 3, 5))
 
 def process_image(image_path, output_name="processed_image.png"):
-    """Applies the Figma-style blue branding with final fine-tuning."""
+    """Replicates Figma's Luminosity blend mode with #0100FF background."""
     ensure_output_folder()
     
     # Open image
     img = Image.open(image_path).convert("RGB")
     width, height = img.size
 
-    # Convert image to grayscale (Desaturation)
-    img_gray = img.convert("L").convert("RGB")
+    # Convert image to grayscale (FULL desaturation)
+    img_gray = img.convert("L")  
 
-    # Adjust brightness & contrast based on final deltas
-    enhancer = ImageEnhance.Brightness(img_gray)
-    img_gray = enhancer.enhance(1.1)  # Fine-tuned brightness boost
-
+    # Adjust contrast to match Figma’s handling of luminosity
     enhancer = ImageEnhance.Contrast(img_gray)
-    img_gray = enhancer.enhance(1.6)  # Slightly stronger contrast
+    img_gray = enhancer.enhance(2.0)  # Stronger contrast boost for highlights
 
-    # Convert to NumPy array for per-channel adjustments
-    img_np = np.array(img_gray, dtype=np.float32)
-
-    # Apply per-channel scaling factors for final correction
-    img_np[..., 0] *= 1.1  # Red
-    img_np[..., 1] *= 1.1  # Green
-    img_np[..., 2] *= 1.99  # Blue (Figma-style saturation boost)
-
-    # Clip values to 255 (valid image range)
-    img_np = np.clip(img_np, 0, 255).astype(np.uint8)
-
-    # Convert back to PIL image
-    img_gray_adjusted = Image.fromarray(img_np)
+    # Convert back to RGB (needed for blending)
+    img_gray = img_gray.convert("RGB")
 
     # Create solid blue background
     blue_rgb = hex_to_rgb(BLUE_HEX)
     blue_bg = Image.new("RGB", (width, height), blue_rgb)
 
-    # Use "Screen" blending mode for final glow effect
-    blended = Image.blend(blue_bg, img_gray_adjusted, alpha=0.65)
+    # Blend the grayscale image with the blue background (Luminosity Mode Approximation)
+    blended = ImageChops.multiply(blue_bg, img_gray)  
 
     # Save the processed image
     output_path = os.path.join(OUTPUT_FOLDER, output_name)
