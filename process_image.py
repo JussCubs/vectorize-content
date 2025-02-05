@@ -1,6 +1,5 @@
 from PIL import Image, ImageEnhance
 import numpy as np
-import cv2
 import os
 
 OUTPUT_FOLDER = "output"
@@ -45,11 +44,8 @@ def process_image(image_path, brightness=2.5, contrast=0.9, saturation=1.0, blue
     img_corrected = img_gray_np * correction_factors
     img_corrected = np.clip(img_corrected, 0, 255)  # Ensure valid RGB values
 
-    # Convert to uint8
-    img_corrected = img_corrected.astype(np.uint8)
-
-    # Apply proper blending with `blend_alpha`
-    final_img_np = cv2.addWeighted(blue_bg.astype(np.uint8), (1 - blend_alpha), img_corrected, blend_alpha, 0)
+    # Apply proper blending with `blend_alpha` using NumPy (no OpenCV)
+    final_img_np = ((blue_bg * (1 - blend_alpha)) + (img_corrected * blend_alpha)).astype(np.uint8)
 
     # Convert back to PIL image
     final_img = Image.fromarray(final_img_np)
