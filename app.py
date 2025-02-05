@@ -8,18 +8,16 @@ st.title("🔵 Vectorizer - Figma Luminosity Blend")
 st.write("Upload an image and tweak settings until it's **exactly** like Figma!")
 
 # User-adjustable parameters
-brightness = st.slider("Brightness Boost", 0.5, 3.0, 1.2, 0.1)
-contrast = st.slider("Contrast Boost", 0.5, 3.0, 1.5, 0.1)
-saturation = st.slider("Saturation (0 = full grayscale, 1 = normal, 2+ = oversaturated)", 0.0, 2.5, 1.0, 0.1)
-blend_alpha = st.slider("Blend Alpha (0 = full gray, 1 = full blue)", 0.0, 1.0, 0.65, 0.05)
+brightness = st.slider("Brightness Boost", 1.0, 3.0, 2.2, 0.1)  # More brightness control
+contrast = st.slider("Contrast Adjustment", 0.8, 1.5, 1.0, 0.1)  # Lower contrast to avoid darkness
+saturation = st.slider("Saturation (0 = grayscale, 1 = normal, 2+ = oversaturated)", 0.0, 2.5, 1.0, 0.1)
+blue_boost = st.slider("Blue Boost Intensity", 2.0, 5.0, 4.0, 0.1)  # Blue correction factor
+blend_alpha = st.slider("Blend Alpha (Lower = more white, Higher = more blue)", 0.3, 0.7, 0.4, 0.05)
 
 uploaded_file = st.file_uploader("🔥 PICK A MEME, MFER... 🔥", type=["png", "jpg", "jpeg"])
 
 if uploaded_file is not None:
-    # Ensure output folder exists
-    os.makedirs("output", exist_ok=True)
-
-    # Save uploaded image in the output folder
+    # Save uploaded image
     file_path = os.path.join("output", uploaded_file.name)
     with open(file_path, "wb") as f:
         f.write(uploaded_file.getbuffer())
