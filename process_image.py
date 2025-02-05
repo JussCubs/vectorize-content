@@ -25,20 +25,20 @@ def process_image(image_path, output_name="processed_image.png"):
     # Convert image to grayscale (Desaturation)
     grayscale_img = img.convert("L").convert("RGB")
 
-    # Apply final brightness boost (+5%) to correct last issues
+    # Apply final brightness boost (+8%) for Figma accuracy
     enhancer = ImageEnhance.Brightness(grayscale_img)
-    grayscale_img = enhancer.enhance(1.05)  # Final tweak to match Figma
+    grayscale_img = enhancer.enhance(1.08)  # Exact correction from delta analysis
 
     enhancer = ImageEnhance.Contrast(grayscale_img)
-    grayscale_img = enhancer.enhance(1.6)  # Keep contrast sharp
+    grayscale_img = enhancer.enhance(1.6)  # Maintain contrast sharpness
 
     # Convert to NumPy for per-channel fine-tuning
     img_np = np.array(grayscale_img, dtype=np.float32)
 
-    # Apply final per-channel brightness fix
-    img_np[..., 0] *= 1.05  # Red
-    img_np[..., 1] *= 1.05  # Green
-    img_np[..., 2] *= 1.05  # Blue
+    # Apply per-channel brightness fix
+    img_np[..., 0] *= 1.08  # Red
+    img_np[..., 1] *= 1.08  # Green
+    img_np[..., 2] *= 1.08  # Blue
 
     # Clip values to ensure they stay in valid image range
     img_np = np.clip(img_np, 0, 255).astype(np.uint8)
