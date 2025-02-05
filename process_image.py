@@ -37,7 +37,7 @@ def rgb_to_hsl(r, g, b):
     return (h * 360, s, l)  # Convert hue to degrees
 
 def hsl_to_rgb(h, s, l):
-    """Convert HSL back to RGB."""
+    """Convert HSL back to RGB with proper clipping."""
     def hue_to_rgb(p, q, t):
         if t < 0: t += 1
         if t > 1: t -= 1
@@ -56,10 +56,13 @@ def hsl_to_rgb(h, s, l):
         g = hue_to_rgb(p, q, h)
         b = hue_to_rgb(p, q, h - 1/3)
 
-    return (int(r * 255), int(g * 255), int(b * 255))
+    # Clip values between 0-255
+    return (int(np.clip(r * 255, 0, 255)), 
+            int(np.clip(g * 255, 0, 255)), 
+            int(np.clip(b * 255, 0, 255)))
 
-def process_image(image_path, brightness=1.2, contrast=1.5, blend_alpha=0.65, output_name="processed_image.png"):
-    """Replicates Figma's Luminosity blend mode with a blue background."""
+def process_image(image_path, brightness=1.2, contrast=1.5, saturation=1.0, blend_alpha=0.65, output_name="processed_image.png"):
+    """Replicates Figma's Luminosity blend mode with a blue background and proper clipping."""
     ensure_output_folder()
     
     # Open image
