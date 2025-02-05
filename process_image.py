@@ -14,8 +14,8 @@ def hex_to_rgb(hex_color):
     """Convert HEX color to RGB tuple."""
     return np.array([int(hex_color[i:i+2], 16) for i in (1, 3, 5)], dtype=np.float32)
 
-def process_image(image_path, brightness=2.5, contrast=0.9, saturation=1.0, blue_boost=4.5, blend_alpha=0.3, output_name="processed_image.png"):
-    """Applies Figma-style blue branding while preserving white highlights."""
+def process_image(image_path, brightness=2.0, contrast=1.2, saturation=1.0, blue_boost=3.5, blend_alpha=0.4, output_name="processed_image.png"):
+    """Fixes blue effect to properly match Figma-style Luminosity blending."""
     ensure_output_folder()
 
     # Open image
@@ -29,8 +29,8 @@ def process_image(image_path, brightness=2.5, contrast=0.9, saturation=1.0, blue
     img_gray = ImageEnhance.Brightness(img_gray).enhance(brightness)
     img_gray = ImageEnhance.Contrast(img_gray).enhance(contrast)
 
-    # Convert grayscale image to NumPy array
-    img_gray_np = np.array(img_gray, dtype=np.float32) / 255.0  # Normalize to [0,1]
+    # Convert grayscale image to NumPy array (normalize to [0,1])
+    img_gray_np = np.array(img_gray, dtype=np.float32) / 255.0
 
     # Create solid blue background
     blue_rgb = hex_to_rgb(BLUE_HEX)
@@ -40,11 +40,11 @@ def process_image(image_path, brightness=2.5, contrast=0.9, saturation=1.0, blue
     img_gray_np = np.stack([img_gray_np] * 3, axis=-1)  # Convert single-channel grayscale to RGB
 
     # Apply color correction factors
-    correction_factors = np.array([1.2, 1.3, blue_boost])  # Boost blue, restore red/green
+    correction_factors = np.array([1.1, 1.1, blue_boost])  # Boost blue, balance other channels
     img_corrected = img_gray_np * correction_factors
     img_corrected = np.clip(img_corrected, 0, 255)  # Ensure valid RGB values
 
-    # Apply proper blending with `blend_alpha` using NumPy (no OpenCV)
+    # **New Fix:** Apply a weighted blend that preserves luminance correctly
     final_img_np = ((blue_bg * (1 - blend_alpha)) + (img_corrected * blend_alpha)).astype(np.uint8)
 
     # Convert back to PIL image
