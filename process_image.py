@@ -16,49 +16,46 @@ def hex_to_rgb(hex_color):
 
 def apply_luminosity_blend(base_img, overlay_img):
     """
-    Applies W3C 'Luminosity' blending:
-    - Keeps the Luminance from the grayscale overlay
-    - Keeps the Hue/Saturation from the solid blue background
+    Corrected W3C 'Luminosity' blending:
+    - Uses 0% saturation grayscale as the luminance source
+    - Keeps the hue/saturation from the blue background
     """
 
     base_np = np.array(base_img, dtype=np.float32) / 255.0  # Normalize 0-1
     overlay_np = np.array(overlay_img, dtype=np.float32) / 255.0
 
-    # Extract Luminance from grayscale image
+    # Extract Luminance from grayscale image (0% saturation)
     luminance = np.dot(overlay_np, [0.299, 0.587, 0.114])  # Standard luminance formula
 
-    # Properly blend Luminance with the blue image (Fixing issue)
-    result_np = np.zeros_like(base_np)
+    # Blend: Replace the luminance of the base (blue) image
+    blended_np = base_np.copy()
     for i in range(3):  # RGB Channels
-        result_np[..., i] = base_np[..., i] * 0.95 + luminance[..., np.newaxis] * 0.05  # 5% blend correction
+        blended_np[..., i] = base_np[..., i] * (luminance / np.mean(base_np, axis=2))
 
     # Clip values to ensure valid pixel range
-    result_np = np.clip(result_np * 255, 0, 255).astype(np.uint8)
+    blended_np = np.clip(blended_np * 255, 0, 255).astype(np.uint8)
 
-    return Image.fromarray(result_np)
+    return Image.fromarray(blended_np)
 
 def process_image(image_path, output_name="processed_image.png"):
-    """Processes the image exactly like Figma, ensuring proper blue & light retention."""
+    """Processes the image exactly like Figma, ensuring zero saturation."""
     ensure_output_folder()
 
     # Open image
     img = Image.open(image_path).convert("RGB")
     width, height = img.size
 
-    # STEP 1: Create a solid blue background
+    # STEP 1: Convert image to grayscale (100% desaturation)
+    grayscale_img = ImageOps.grayscale(img).convert("RGB")  # 0% Saturation
+
+    # STEP 2: Create a solid blue background
     blue_rgb = hex_to_rgb(BLUE_HEX)
     blue_bg = Image.new("RGB", (width, height), blue_rgb)
 
-    # STEP 2: Convert image to grayscale
-    grayscale_img = ImageOps.grayscale(img).convert("RGB")
-
-    # STEP 3: Resize the blue square to match the image dimensions
-    blue_bg = blue_bg.resize((width, height))
-
-    # STEP 4: Apply Luminosity Blend Mode (Exact W3C Standard)
+    # STEP 3: Apply W3C Luminosity Blend Mode
     blended = apply_luminosity_blend(blue_bg, grayscale_img)
 
-    # STEP 5: Save the processed image
+    # STEP 4: Save processed image
     output_path = os.path.join(OUTPUT_FOLDER, output_name)
     blended.save(output_path)
 
