@@ -35,10 +35,10 @@ def process_image(image_path, output_name="processed_image.png"):
     # Convert to NumPy for per-channel fine-tuning
     img_np = np.array(grayscale_img, dtype=np.float32)
 
-    # Apply per-channel brightness fix (+5%)
+    # Apply per-channel brightness fix (+5%) and blue boost (+10%)
     img_np[..., 0] *= 1.05  # Red
     img_np[..., 1] *= 1.05  # Green
-    img_np[..., 2] *= 1.05  # Blue
+    img_np[..., 2] *= 1.1   # Blue (now matches Figma)
 
     # Clip values to ensure they stay in valid image range
     img_np = np.clip(img_np, 0, 255).astype(np.uint8)
