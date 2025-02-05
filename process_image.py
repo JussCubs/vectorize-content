@@ -15,30 +15,30 @@ def hex_to_rgb(hex_color):
     return tuple(int(hex_color[i:i+2], 16) for i in (1, 3, 5))
 
 def process_image(image_path, output_name="processed_image.png"):
-    """Applies the correct Figma-style blue branding process."""
+    """Applies the most accurate Figma-style blue branding process."""
     ensure_output_folder()
     
     # Open image
     img = Image.open(image_path).convert("RGB")
     width, height = img.size
 
-    # Convert image to grayscale (Desaturation)
+    # Convert to grayscale (Desaturation)
     img_gray = img.convert("L").convert("RGB")
 
-    # Adjust brightness & contrast dynamically based on deltas
+    # Adjust brightness & contrast for final accuracy
     enhancer = ImageEnhance.Brightness(img_gray)
-    img_gray = enhancer.enhance(1.2)  # General brightness boost
+    img_gray = enhancer.enhance(1.1)  # Final brightness tweak
 
     enhancer = ImageEnhance.Contrast(img_gray)
-    img_gray = enhancer.enhance(1.5)  # Higher contrast for a sharper effect
+    img_gray = enhancer.enhance(1.6)  # Sharper contrast for highlights
 
     # Convert to NumPy for per-channel adjustments
     img_np = np.array(img_gray, dtype=np.float32)
 
-    # Apply per-channel scaling factors
-    img_np[..., 0] *= 1.2  # Red
-    img_np[..., 1] *= 1.2  # Green
-    img_np[..., 2] *= 2.5  # Blue (strongest boost)
+    # Apply per-channel scaling factors for fine-tuned brightness boost
+    img_np[..., 0] *= 1.1  # Red
+    img_np[..., 1] *= 1.1  # Green
+    img_np[..., 2] *= 1.1  # Blue (adjusted for correct glow)
 
     # Clip values to 255 (valid image range)
     img_np = np.clip(img_np, 0, 255).astype(np.uint8)
@@ -50,8 +50,8 @@ def process_image(image_path, output_name="processed_image.png"):
     blue_rgb = hex_to_rgb(BLUE_HEX)
     blue_bg = Image.new("RGB", (width, height), blue_rgb)
 
-    # Use "Screen" blending mode for brighter highlights
-    blended = Image.blend(blue_bg, img_gray_adjusted, alpha=0.6)
+    # Blend using "Screen" blending mode with final opacity tuning
+    blended = Image.blend(blue_bg, img_gray_adjusted, alpha=0.62)
 
     # Save the processed image
     output_path = os.path.join(OUTPUT_FOLDER, output_name)
