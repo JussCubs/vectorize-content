@@ -15,7 +15,7 @@ def hex_to_rgb(hex_color):
     return tuple(int(hex_color[i:i+2], 16) for i in (1, 3, 5))
 
 def process_image(image_path, output_name="processed_image.png"):
-    """Applies the most accurate Figma-style blue branding process."""
+    """Applies the exact Figma-style blue branding process."""
     ensure_output_folder()
 
     # Open image
@@ -25,20 +25,20 @@ def process_image(image_path, output_name="processed_image.png"):
     # Convert image to grayscale (Desaturation)
     grayscale_img = img.convert("L").convert("RGB")
 
-    # Apply final brightness boost (+8%) for Figma accuracy
+    # Apply final brightness boost (+5%) for Figma accuracy
     enhancer = ImageEnhance.Brightness(grayscale_img)
-    grayscale_img = enhancer.enhance(1.08)  # Exact correction from delta analysis
+    grayscale_img = enhancer.enhance(1.05)  # Corrected brightness based on math
 
     enhancer = ImageEnhance.Contrast(grayscale_img)
-    grayscale_img = enhancer.enhance(1.6)  # Maintain contrast sharpness
+    grayscale_img = enhancer.enhance(1.6)  # Keep contrast sharp
 
     # Convert to NumPy for per-channel fine-tuning
     img_np = np.array(grayscale_img, dtype=np.float32)
 
-    # Apply per-channel brightness fix
-    img_np[..., 0] *= 1.08  # Red
-    img_np[..., 1] *= 1.08  # Green
-    img_np[..., 2] *= 1.08  # Blue
+    # Apply per-channel brightness fix (+5%)
+    img_np[..., 0] *= 1.05  # Red
+    img_np[..., 1] *= 1.05  # Green
+    img_np[..., 2] *= 1.05  # Blue
 
     # Clip values to ensure they stay in valid image range
     img_np = np.clip(img_np, 0, 255).astype(np.uint8)
