@@ -14,7 +14,7 @@ def hex_to_rgb(hex_color):
     """Convert HEX color to RGB tuple."""
     return np.array([int(hex_color[i:i+2], 16) for i in (1, 3, 5)], dtype=np.float32)
 
-def process_image(image_path, brightness=1.9, contrast=1.2, saturation=1.0, blend_alpha=0.55, output_name="processed_image.png"):
+def process_image(image_path, brightness=2.2, contrast=1.0, saturation=1.0, blend_alpha=0.4, output_name="processed_image.png"):
     """Corrects the image to match Figma's Luminosity mode using precise adjustments."""
     ensure_output_folder()
     
@@ -27,6 +27,8 @@ def process_image(image_path, brightness=1.9, contrast=1.2, saturation=1.0, blen
 
     # Adjust brightness & contrast dynamically
     img_gray = ImageEnhance.Brightness(img_gray).enhance(brightness)
+    
+    # No contrast boost to avoid shadow crushing
     img_gray = ImageEnhance.Contrast(img_gray).enhance(contrast)
 
     # Convert grayscale image to NumPy array
@@ -36,7 +38,7 @@ def process_image(image_path, brightness=1.9, contrast=1.2, saturation=1.0, blen
     blue_rgb = hex_to_rgb(BLUE_HEX)
 
     # Apply correction factors to match Figma (based on computed values)
-    correction_factors = np.array([1.3, 1.4, 3.5])  # Boost blue more, restore red/green
+    correction_factors = np.array([1.3, 1.5, 4.0])  # Extreme blue boost, restore red/green
 
     # Blend grayscale as luminosity while applying color correction
     corrected_rgb = blue_rgb * correction_factors  # Boost blue, restore red/green
