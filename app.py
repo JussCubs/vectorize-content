@@ -10,7 +10,6 @@ st.write("Drop a meme and let the **blue magic** happen.")
 # Sliders for user adjustments
 brightness_factor = st.slider("Brightness", 0.5, 2.0, 1.15, 0.01)
 contrast_factor = st.slider("Contrast", 0.5, 2.0, 1.2, 0.01)
-blend_strength = st.slider("Blend Strength", 0.0, 1.0, 1.0, 0.01)
 
 uploaded_file = st.file_uploader("PICK A MEME, MFER... ", type=["png", "jpg", "jpeg"])
 
@@ -22,7 +21,7 @@ if uploaded_file is not None:
         f.write(uploaded_file.getbuffer())
 
     # Process Image with user adjustments
-    processed_image = process_image(file_path, brightness_factor, contrast_factor, blend_strength)
+    processed_image = process_image(file_path, brightness_factor, contrast_factor)
 
     # Convert to Bytes for Download
     from io import BytesIO
