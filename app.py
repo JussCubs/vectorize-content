@@ -5,9 +5,9 @@ from process_image import process_image
 st.set_page_config(page_title="🔵 Vectorizer", layout="centered")
 
 st.title("🔵 Vectorizer")
-st.write("Upload a meme and let the **blue magic** happen.")
+st.write("UPLOAD MEME FOR **BLUE MAGIC**")
 
-uploaded_file = st.file_uploader("🔥 PICK A MEME, MFER... 🔥", type=["png", "jpg", "jpeg"])
+uploaded_file = st.file_uploader("PICK A MEME, MFER...", type=["png", "jpg", "jpeg"])
 
 if uploaded_file is not None:
     # Ensure output folder exists
@@ -22,12 +22,12 @@ if uploaded_file is not None:
     output_path = process_image(file_path, output_name=f"vectorized_{uploaded_file.name}")
 
     # Show Processed Image
-    st.image(output_path, caption="🔵 Your Meme, but BLUE 🔵", use_column_width=True)
+    st.image(output_path, caption="🔵 Your Meme, but BLUE 🔵", use_container_width=True)  # ✅ Fixed here
 
     # Provide Browser Download
     with open(output_path, "rb") as f:
         st.download_button(
-            label="🚀 DOWNLOAD YOUR VECTORIZED MEME 🚀",
+            label="DOWNLOAD YOUR VECTORIZED MEME",
             data=f,
             file_name=f"vectorized_{uploaded_file.name}",
             mime="image/png"
