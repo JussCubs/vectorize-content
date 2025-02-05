@@ -5,7 +5,7 @@ from process_image import process_image
 st.set_page_config(page_title="🔵 Vectorizer", layout="centered")
 
 st.title("🔵 Vectorizer")
-st.write("Upload an image to apply the blue branding process.")
+st.write("UPLOAD AN IMAGE TO VECTORIZE IT BLUE")
 
 uploaded_file = st.file_uploader("CHOOSE A MEME MFER...", type=["png", "jpg", "jpeg"])
 
