@@ -14,6 +14,28 @@ def hex_to_rgb(hex_color):
     """Convert HEX color to RGB tuple."""
     return tuple(int(hex_color[i:i+2], 16) for i in (1, 3, 5))
 
+def apply_luminosity_blend(base_img, overlay_img):
+    """
+    Applies W3C 'Luminosity' blending:
+    - Keeps the Luminance from the grayscale overlay
+    - Keeps the Hue/Saturation from the solid blue background
+    """
+
+    base_np = np.array(base_img, dtype=np.float32) / 255.0  # Normalize 0-1
+    overlay_np = np.array(overlay_img, dtype=np.float32) / 255.0
+
+    # Extract Luminance from grayscale image
+    luminance = np.dot(overlay_np, [0.299, 0.587, 0.114])  # Standard luminance formula
+
+    # Apply the luminance to the blue background (keeping blue hue & saturation)
+    for i in range(3):  # RGB Channels
+        base_np[..., i] = base_np[..., i] * (luminance / np.mean(base_np, axis=2))
+
+    # Clip values to ensure valid pixel range
+    result_np = np.clip(base_np * 255, 0, 255).astype(np.uint8)
+
+    return Image.fromarray(result_np)
+
 def process_image(image_path, output_name="processed_image.png"):
     """Processes the image exactly like Figma, ensuring the blue square is placed properly."""
     ensure_output_folder()
@@ -22,18 +44,18 @@ def process_image(image_path, output_name="processed_image.png"):
     img = Image.open(image_path).convert("RGB")
     width, height = img.size
 
-    # STEP 1: Create the blue square (Background)
+    # STEP 1: Create a solid blue background
     blue_rgb = hex_to_rgb(BLUE_HEX)
     blue_bg = Image.new("RGB", (width, height), blue_rgb)
 
-    # STEP 2: Paste the Meme (Overlay Image)
-    grayscale_img = ImageOps.grayscale(img).convert("RGB")  # Convert to Grayscale
+    # STEP 2: Convert image to grayscale
+    grayscale_img = ImageOps.grayscale(img).convert("RGB")
 
     # STEP 3: Resize the blue square to match the image dimensions
     blue_bg = blue_bg.resize((width, height))
 
-    # STEP 4: Apply W3C Luminosity Blend Mode
-    blended = Image.blend(blue_bg, grayscale_img, alpha=1.0)  # Full Luminosity effect
+    # STEP 4: Apply Luminosity Blend Mode (Exact W3C Standard)
+    blended = apply_luminosity_blend(blue_bg, grayscale_img)
 
     # STEP 5: Save the processed image
     output_path = os.path.join(OUTPUT_FOLDER, output_name)
