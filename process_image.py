@@ -22,12 +22,10 @@ def apply_luminosity_blend(base_img, overlay_img):
     """
 
     base_np = np.array(base_img, dtype=np.float32) / 255.0  # Normalize 0-1
-    overlay_np = np.array(overlay_img.convert("RGB"), dtype=np.float32) / 255.0  # Convert grayscale to RGB shape
+    overlay_np = np.array(overlay_img.convert("L"), dtype=np.float32) / 255.0  # Convert grayscale
+    luminance = np.expand_dims(overlay_np, axis=-1)  # Expand dims to match (H, W, 1)
 
-    # Extract Luminance from grayscale image (0% saturation)
-    luminance = np.dot(overlay_np, [0.299, 0.587, 0.114])[:, :, np.newaxis]  # Expand to match RGB shape
-
-    # Blend: Replace the luminance of the base (blue) image
+    # Ensure correct broadcasting shape
     blended_np = base_np * (luminance / np.mean(base_np, axis=2, keepdims=True))
 
     # Clip values to ensure valid pixel range
@@ -44,7 +42,7 @@ def process_image(image_path, output_name="processed_image.png"):
     width, height = img.size
 
     # STEP 1: Convert image to grayscale (100% desaturation)
-    grayscale_img = ImageOps.grayscale(img).convert("RGB")  # 0% Saturation, convert back to RGB
+    grayscale_img = ImageOps.grayscale(img).convert("RGB")  # 0% Saturation, back to RGB
 
     # STEP 2: Create a solid blue background
     blue_rgb = hex_to_rgb(BLUE_HEX)
